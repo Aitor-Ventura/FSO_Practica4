@@ -1,0 +1,51 @@
+practica4NoFix está compilado con la versión inicial que se nos otorga al inicio de la práctica. Podemos observar errores donde el búfer se queda corrupto
+en varias simulaciones. Este es un ejemplo que he conseguido con ./practica4NoFix 10 5 5
+
+    »»» Comienza la prueba del búfer...
+    >>> inserción: item=2, pos=0
+    >>> inserción: item=0, pos=1
+    >>> inserción: item=4, pos=2
+    <<< extracción: item=2, pos=0
+    Consumidor extrae: 2
+    <<< extracción: item=0, pos=1
+    Consumidor extrae: 0
+    <<< extracción: item=4, pos=2
+    Consumidor extrae: 4
+    >>> inserción: item=3, pos=3
+    >>> inserción: item=1, pos=4
+    <<< extracción: item=1, pos=3
+    Consumidor extrae: 1
+    <<< extracción: item=0, pos=4
+    Consumidor extrae: 0
+    »»» Fin de la prueba del búfer
+
+Como observamos, insertamos correctamente, pero a la hora de extraer, los items se corrompen, así extrayendo un item en una posición que se encontraba otro.
+Para verlo de manera más clara, ordenamos el output y obtenemos:
+
+    >>> inserción: item=2, pos=0
+    <<< extracción: item=2, pos=0
+    >>> inserción: item=0, pos=1
+    <<< extracción: item=0, pos=1
+    >>> inserción: item=4, pos=2
+    <<< extracción: item=4, pos=2
+    >>> inserción: item=3, pos=3
+    <<< extracción: item=1, pos=3 --> ERROR
+    >>> inserción: item=1, pos=4
+    <<< extracción: item=0, pos=4 --> ERROR
+
+Esto ocurre por la falta de control de los recursos en cada hilo. Una vez controlado, volvemos a hacer una prueba con ./practica4 10 5 5 y obtenemos el output:
+
+    »»» Comienza la prueba del búfer...
+    >>> inserción: item=4, pos=0
+    <<< extracción: item=4, pos=0
+    >>> inserción: item=3, pos=1
+    <<< extracción: item=3, pos=1
+    >>> inserción: item=2, pos=2
+    >>> inserción: item=1, pos=3
+    <<< extracción: item=2, pos=2
+    <<< extracción: item=1, pos=3
+    >>> inserción: item=0, pos=4
+    <<< extracción: item=0, pos=4
+    »»» Fin de la prueba del búfer
+
+Que como podemos observar, nos funciona sin problema. Para poner al programa frente a otros ejemplos, testear con ./test_buffer.sh

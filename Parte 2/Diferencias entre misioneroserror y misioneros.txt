@@ -1,0 +1,79 @@
+misioneroserror está compilada con una versión que no tiene ningún tipo de control de sincronización entre hilos. Podemos observar errores donde el bote se queda corrupto
+en varias simulaciones. Este es un ejemplo conseguido con ./misioneroserror 3 3
+        ---------------------
+        INICIO DEL PROGRAMA
+        >>> Inserción: pos = 0
+        EVENTO: Sube un canibal al bote. Num de personas en el bote: 1, Misioneros abordo: 0, Canibales abordo: 1
+        >>> Inserción: pos = 1
+        EVENTO: Sube un misionero al bote. Num de personas en el bote: 2, Misioneros abordo: 1, Canibales abordo: 1
+        >>> Inserción: pos = 2
+        EVENTO: Sube un misionero al bote. Num de personas en el bote: 3, Misioneros abordo: 2, Canibales abordo: 1
+
+        EVENTO: VIAJAMOS
+
+        <<< Extracción: pos = 0
+        EVENTO: Se baja un misionero del bote.
+        >>> Inserción: pos = 0 --> MALA INSERCIÓN, DEBE ESPERAR
+        EVENTO: Sube un canibal al bote. Num de personas en el bote: 3, Misioneros abordo: 1, Canibales abordo: 2
+
+        EVENTO: VIAJAMOS  --> CORRUPCION, VIAJE NO DEBERÍA SUCEDER HASTA QUE BAJARAN TODOS Y SUBIERAN NUEVOS
+
+        <<< Extracción: pos = 1
+        EVENTO: Se baja un canibal del bote.
+        >>> Inserción: pos = 1 --> MALA INSERCIÓN, DEBE ESPERAR
+        EVENTO: Sube un canibal al bote. Num de personas en el bote: 3, Misioneros abordo: 1, Canibales abordo: 2
+
+        EVENTO: VIAJAMOS --> CORRUPCION, VIAJE NO DEBERÍA SUCEDER HASTA QUE BAJARAN TODOS Y SUBIERAN NUEVOS
+
+        <<< Extracción: pos = 2
+        EVENTO: Se baja un canibal del bote.
+        [!] Dos misioneros y un canibal no pueden viajar juntos. 
+        >>> Inserción: pos = 2 --> CORRUPCIÓN, NO PUEDE SUBIRSE UN MISIONERO
+        EVENTO: Sube un misionero al bote. Num de personas en el bote: 3, Misioneros abordo: 2, Canibales abordo: 1
+
+        EVENTO: VIAJAMOS --> CORRUPCION, NO SE PUEDE VIAJAR CON LA COMBINACION PROHIBIDA (2 MISIONEROS 1 CANIBAL)
+                         --> CORRUPCION, 4 VIAJES TOTALES, DEBEN SER 2 (6/3 = 2)
+
+        <<< Extracción: pos = 0
+        EVENTO: Se baja un misionero del bote.
+        <<< Extracción: pos = 1
+        EVENTO: Se baja un misionero del bote.
+        <<< Extracción: pos = 2
+        EVENTO: Se baja un canibal del bote.
+
+        EVENTO: El bote vuelve vacío. ¡Las corrientes estaban a nuestro favor!
+        RESTANTES: Misioneros 0, Canibales 0
+
+        FIN DEL PROGRAMA
+        ---------------------
+
+Como observamos, suceden viajes que no deberían ocurrir, que no se espera a que se bajen todos los misioneros/canibales antes de que se suban los demás, ni se respeta el cumplimiento de evitar la
+combinación prohibida. Esto ocurre por la falta de control en los diferentes hilos. Una vez controlado, volvemos a hacer una prueba con ./misioneros 3 3 y obtenemos el output:
+        ---------------------
+        INICIO DEL PROGRAMA
+        >>> Inserción: pos = 0
+        EVENTO: Sube un canibal al bote. Num de personas en el bote: 1, Misioneros abordo: 0, Canibales abordo: 1
+        >>> Inserción: pos = 1
+        EVENTO: Sube un canibal al bote. Num de personas en el bote: 2, Misioneros abordo: 0, Canibales abordo: 2
+        >>> Inserción: pos = 2
+        EVENTO: Sube un misionero al bote. Num de personas en el bote: 3, Misioneros abordo: 1, Canibales abordo: 2
+
+        EVENTO: VIAJAMOS
+
+        <<< Extracción: pos = 0
+        EVENTO: Se baja un misionero del bote.
+        <<< Extracción: pos = 1
+        EVENTO: Se baja un canibal del bote.
+        <<< Extracción: pos = 2
+        EVENTO: Se baja un canibal del bote.
+
+        EVENTO: El bote vuelve vacío. ¡Las corrientes estaban a nuestro favor!
+        RESTANTES: Misioneros 2, Canibales 1
+
+        [!] Dos misioneros y un canibal no pueden viajar juntos.
+        FIN DEL PROGRAMA
+        ---------------------
+
+De primera vista, observamos que el tamaño es muy diferente, pues se han realizado únicamente dos viajes. Se ha respetado la combinación prohibida y se ha respetado a que se bajen todos los
+canibales/misioneros antes de permitir que entre nadie más. Se ha terminado pues tenemos definido que se haga, en el código de misioneros.c se especifica como hacer si queremos que se queden los
+hilos esperando a que se cumpla una combinacion posible con recursos que podrian llegar en el futuro. Para poner al programa frente a otros ejemplos, testear con ./test_misioneros.sh
